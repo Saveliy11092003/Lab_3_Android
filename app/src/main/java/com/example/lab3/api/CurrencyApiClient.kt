@@ -1,8 +1,9 @@
-package com.example.lab3.service
+package com.example.lab3.api
 
 import android.util.Log
 import com.example.lab3.adapter.CurrencyAdapter
 import com.example.lab3.model.Currency
+import com.example.lab3.service.ParseService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -11,7 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 
-class NetworkService(private var adapter: CurrencyAdapter) {
+class CurrencyApiClient(private var adapter: CurrencyAdapter, private val onError: (String) -> Unit) {
 
     private val parseService : ParseService = ParseService()
 
@@ -34,7 +35,7 @@ class NetworkService(private var adapter: CurrencyAdapter) {
                     }
                     Log.i("NetworkService", "The request to the server was successful")
                     val responseBody = response.body!!.string()
-                    currencies = parseService.parseAllCurrencies(responseBody)
+                    currencies = parseService.parseAllCurrencies(responseBody, onError)
 
                     withContext(Dispatchers.Main) {
                         adapter.setCurrencies(currencies)
@@ -43,6 +44,9 @@ class NetworkService(private var adapter: CurrencyAdapter) {
                 }
             } catch (e: IOException) {
                 Log.e("NetworkService", "Connection error: $e")
+                withContext(Dispatchers.Main) {
+                    onError("Ошибка соединения: ${e.message}")
+                }
             }
         }
     }

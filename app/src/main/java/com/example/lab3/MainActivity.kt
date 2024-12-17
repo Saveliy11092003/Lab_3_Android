@@ -2,11 +2,14 @@ package com.example.lab3
 
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.lab3.databinding.ActivityMainBinding
 import com.example.lab3.adapter.CurrencyAdapter
-import com.example.lab3.service.NetworkService
+import com.example.lab3.api.CurrencyApiClient
+import com.example.lab3.utils.UiUtils
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,14 +25,20 @@ class MainActivity : AppCompatActivity() {
 
         initRecyclerView()
         Log.i("MainActivity", "Initializing RecyclerView")
-        NetworkService(adapter).httpRequest()
+        CurrencyApiClient(adapter){ errorMessage ->
+            UiUtils.showError(this, errorMessage)
+        }.httpRequest()
         Log.i("MainActivity", "Set currencies in CurrencyAdapter")
 
     }
 
     private fun initRecyclerView() {
         adapter = CurrencyAdapter { selectedCurrency ->
-            updateConversion(selectedCurrency.value)
+            val result = UiUtils.updateConversion(
+                binding.editTextNumberDecimal.text.toString(),
+                selectedCurrency.value
+            )
+            binding.result.text = result
         }
 
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
@@ -37,16 +46,6 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "Set layout and adapter in RecyclerView")
     }
 
-    private fun updateConversion(currencyValue: Double) {
-        val rublesText = binding.editTextNumberDecimal.text.toString()
-        Log.d("MainActivity", "Rubles - $rublesText")
-        val rubles = rublesText.toDoubleOrNull() ?: 0.0
-
-        val convertedValue = rubles / currencyValue
-
-        binding.result.text = String.format("%.2f", convertedValue)
-        Log.i("MainActivity", "Update converted value : " + String.format("%.2f", convertedValue))
-    }
 }
 
 
